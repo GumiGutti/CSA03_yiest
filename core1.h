@@ -81,6 +81,8 @@ void core1setup(void) {  // a.k.a. setup
 
 
 void core1task(void* parameter) {
+  delay(10);
+  s.println("Core1 task started");
   for (;;) {  // a.k.a. loop
     if (firstRunCore1) {
       firstRunCore1 = false;
@@ -119,6 +121,7 @@ void core1task(void* parameter) {
 
       lora.begin(115200, SERIAL_8N1, loraRx, loraTx);
       size_t dummy = lora.setRxBufferSize(2048);
+      s.println("Core1 setup done");
     }
     // lora ....
     // ***
@@ -210,7 +213,7 @@ void core1task(void* parameter) {
       uint16_t sta = (gpsNoTO << 0) | (gpsLockOK << 1) | (gpsTimeOK << 2) | (bmpOK << 3) | (bmeOK << 4)
                      | (adxlOK << 5) | (imuOK << 6) | (inaOK << 7) | (camOK << 8)
                      | (sdcardOK << 9) | (bufferOK << 10) | (dsOK << 11) | (lightOK << 12) | (missionPhase << 13);
-      if (1) {
+      if (sLora == sRun) {
         sprintf(c, "%10.3lf", tLoraTrigger / 1000.0);
         addSD(c);
         addSD("\t");
@@ -227,6 +230,7 @@ void core1task(void* parameter) {
       switch (sLora) {
         case sRun:
           {  // tchk start
+            s.println("Lora Tx");
             digitalWrite(pinPin, 1);
             tikk++;
             txBufIdx = 0;
@@ -311,10 +315,12 @@ void core1task(void* parameter) {
           }
         case sError:
           {
+            s.println("Lora Error State");
             break;
           }
         case sStart:
           {
+            s.println("Lora Boot");
             delay(300);
             digitalWrite(loraRst, 1);
             delay(5);

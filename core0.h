@@ -26,7 +26,7 @@ TaskHandle_t hCore0task;
 #include <Adafruit_BME280.h>
 #include <Adafruit_INA219.h>
 
-bool debug = 1;
+bool debug = 0;
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 #include "Wire.h"
@@ -130,16 +130,21 @@ void core0setup() {  // a.k.a. setup
     &hCore0task,
     0);
 }
-
+uint32_t z = millis();
 void core0task(void* parameter) {  // a.k.a. loop
-  //s.println("core0task fut");
+  s.println("Core0 task started");
   for (;;) {
     if (firstRunCore0) {
       //twi.begin(i2cSDA, i2cSCL, 400000);
-      //s.println("Elsőkör");
+      Wire.begin(21, 22);
+      Wire.setClock(400000);  // 400kHz I2C clock. Comment this line if having compilation difficulties
+      s.println("Core0 setup done");
       firstRunCore0 = false;
     }
-
+    if (millis() - z > 500) {
+      z = millis();
+      s.printf("IMU %d\tDS18 %d\tBMP %d\tBME %d\tADXL %d\tINA %d\n", sImu, sDallas, sBMP, sBME, sADXL, sINA);
+    }
     if (millis() - tImuTrigger > tImuDelay) {
       tImuTrigger = millis();
       switch (sImu) {
@@ -208,9 +213,6 @@ void core0task(void* parameter) {  // a.k.a. loop
           }
         case sStart:
           {
-            Wire.begin();
-            //Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
-
             // initialize device
             mpu.initialize();
             pinMode(INTERRUPT_PIN, INPUT);
